@@ -1,7 +1,8 @@
 package com.shreyas.order_payment_platform.security;
 
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,4 +41,31 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+    public String getUsernameFromToken(String token){
+        Claims claims = Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.getSubject();
+    }
+
+    public boolean validateToken(String token){
+        try{
+            Jwts.parser()
+                    .verifyWith(getSecretKey())
+                    .build()
+                    .parseSignedClaims(token);
+            return true;
+        } catch (ExpiredJwtException e) {
+            System.out.println("JWT expired: " + e.getMessage());
+        } catch (MalformedJwtException e) {
+            System.out.println("Invalid JWT: " + e.getMessage());
+        } catch (SignatureException e) {
+            System.out.println("Invalid JWT signature: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("JWT claims empty: " + e.getMessage());
+        }
+        return false;
+    }
 }
