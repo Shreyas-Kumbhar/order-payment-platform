@@ -27,6 +27,7 @@ public class UserController {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .build();
+
         return ResponseEntity.ok(response);
     }
 }
