@@ -30,7 +30,7 @@ public class Order {
     private OrderStatus orderStatus;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal Totalamount;
+    private BigDecimal totalAmount;
 
     @Builder.Default
     @OneToMany(
