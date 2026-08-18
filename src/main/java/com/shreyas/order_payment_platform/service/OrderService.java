@@ -2,6 +2,7 @@ package com.shreyas.order_payment_platform.service;
 
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
+import com.shreyas.order_payment_platform.dto.responses.OrderItemResponse;
 import com.shreyas.order_payment_platform.dto.responses.OrderResponse;
 import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.OrderItem;
@@ -17,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -67,4 +69,40 @@ public class OrderService {
         Order savedOrder=orderRepository.save(order);
         return toResponse(savedOrder);
     }
+
+    public List<OrderResponse> getMyOrders(Authentication authentication) {
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(()-> new IllegalArgumentException
+                        ("User not found with username: " + authentication.getName()));
+
+        return orderRepository.findByUser(user)
+                .stream().map(this::toResponse)
+                .toList();
+    }
+
+    public OrderResponse getOrderById(Long id) {
+        Order order= orderRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + id));
+        return toResponse(order);
+    }
+
+    private OrderResponse toResponse(Order order) {
+        List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
+                .map(item -> new OrderItemResponse(
+                        item.getProduct().getId(),
+                        item.getProduct().getName(),
+                        item.getQuantity(),
+                        item.getPurchaseAtPrice()
+                ))
+                .toList();
+
+        return new OrderResponse(
+                order.getId(),
+                order.getOrderStatus().name(),
+                order.getTotalAmount(),
+                orderItemResponses,
+                order.getCreatedAt()
+        );
+    }
+
 }
