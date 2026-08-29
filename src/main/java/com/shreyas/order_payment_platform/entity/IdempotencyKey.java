@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @Table(name="idempotency_keys")
-public class Idempotency {
+public class IdempotencyKey {
     @Id
     private String key;
     private String requestHash;
