@@ -1,4 +1,7 @@
 package com.shreyas.order_payment_platform.exception;
 
-public class DuplicateIdempotencyKeyException {
+public class DuplicateIdempotencyKeyException extends RuntimeException{
+    public DuplicateIdempotencyKeyException(String message) {
+        super(message);
+    }
 }
