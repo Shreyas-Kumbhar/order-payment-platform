@@ -33,6 +33,8 @@ public class IdempotencyFilter extends OncePerRequestFilter {
                                     HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
             String idempotencyKey = request.getHeader(IDEMPOTENCY_KEY_HEADER);
-            if (idempotencyKey == null) {}
+            if (idempotencyKey == null) {
+
+            }
     }
 }
