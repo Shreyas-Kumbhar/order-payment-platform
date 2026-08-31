@@ -3,6 +3,7 @@ package com.shreyas.order_payment_platform.service;
 import com.shreyas.order_payment_platform.dto.requests.ProductRequests;
 import com.shreyas.order_payment_platform.dto.responses.ProductResponse;
 import com.shreyas.order_payment_platform.entity.Product;
+import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,7 @@ public class ProductService {
 
     public ProductResponse getProductById(Long id) {
         Product product= productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
         return toResponse(product);
     }
 

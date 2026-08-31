@@ -1,5 +1,7 @@
 package com.shreyas.order_payment_platform.service;
 
+import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
+import jakarta.transaction.Transactional;
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
 import com.shreyas.order_payment_platform.dto.responses.OrderItemResponse;
@@ -9,10 +11,11 @@ import com.shreyas.order_payment_platform.entity.OrderItem;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
+import com.shreyas.order_payment_platform.exception.InsufficientStockException;
+import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -27,11 +30,12 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(()-> new IllegalArgumentException
+                .orElseThrow(()-> new ResourceNotFoundException
                         ("User not found with username: " + authentication.getName()));
 
         Order order = Order.builder()
@@ -44,11 +48,11 @@ public class OrderService {
 
         for(OrderItemRequest itemRequest : request.getOrderItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(()-> new IllegalArgumentException
+                    .orElseThrow(()-> new ResourceNotFoundException
                             ("Product not found with id: " + itemRequest.getProductId()));
 
             if(product.getStockQuantity() < itemRequest.getQuantity()) {
-                throw new IllegalStateException
+                throw new InsufficientStockException
                         ("Insufficient stock for product: " + product.getName());
             }
 
@@ -73,7 +77,7 @@ public class OrderService {
 
     public List<OrderResponse> getMyOrders(Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(()-> new IllegalArgumentException
+                .orElseThrow(()-> new ResourceNotFoundException
                         ("User not found with username: " + authentication.getName()));
 
         return orderRepository.findByUser(user)
@@ -83,7 +87,7 @@ public class OrderService {
 
     public OrderResponse getOrderById(Long id) {
         Order order= orderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         return toResponse(order);
     }
 
