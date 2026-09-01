@@ -34,6 +34,7 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, Authentication authentication) {
+
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(()-> new ResourceNotFoundException
                         ("User not found with username: " + authentication.getName()));
