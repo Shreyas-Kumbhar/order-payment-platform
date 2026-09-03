@@ -1,6 +1,7 @@
 package com.shreyas.order_payment_platform.service;
 
 import com.shreyas.order_payment_platform.entity.*;
+import com.shreyas.order_payment_platform.exception.IdempotencyConflictException;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import jakarta.transaction.Transactional;
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
@@ -38,7 +39,7 @@ public class OrderService {
         if(existing.isPresent()){
             IdempotencyKey record=existing.get();
             if(!record.getRequestHash().equals(requestHash)){
-                throw new IdempotencyKeyConflictException("Idempotency key already used with a different request payload.");
+                throw new IdempotencyConflictException("Idempotency key already used with a different request payload.");
             }
         }
 
