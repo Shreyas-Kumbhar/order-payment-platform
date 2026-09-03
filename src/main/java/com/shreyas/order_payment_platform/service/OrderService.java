@@ -41,6 +41,7 @@ public class OrderService {
             if(!record.getRequestHash().equals(requestHash)){
                 throw new IdempotencyConflictException("Idempotency key already used with a different request payload.");
             }
+            return deserializeResponse(record.getResponseBody());
         }
 
         User user = userRepository.findByUsername(authentication.getName())
