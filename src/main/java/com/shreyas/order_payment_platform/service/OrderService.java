@@ -1,15 +1,12 @@
 package com.shreyas.order_payment_platform.service;
 
+import com.shreyas.order_payment_platform.entity.*;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import jakarta.transaction.Transactional;
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
 import com.shreyas.order_payment_platform.dto.responses.OrderItemResponse;
 import com.shreyas.order_payment_platform.dto.responses.OrderResponse;
-import com.shreyas.order_payment_platform.entity.Order;
-import com.shreyas.order_payment_platform.entity.OrderItem;
-import com.shreyas.order_payment_platform.entity.Product;
-import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
 import com.shreyas.order_payment_platform.exception.InsufficientStockException;
 import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
@@ -33,7 +30,18 @@ public class OrderService {
     private final IdempotencyKeyRepository idempotencyKeyRepository;
 
     @Transactional
-    public OrderResponse createOrder(OrderRequest request, Authentication authentication) {
+    public OrderResponse processOrder(OrderRequest request, String idempotencyKey, Authentication authentication) {
+
+        String requestHash=hashRequest(request);
+
+        var existing=idempotencyKeyRepository.findByIdempotencyKey(idempotencyKey);
+        if(existing.isPresent()){
+            IdempotencyKey record=existing.get();
+            if(!record.getRequestHash().equals(requestHash)){
+                throw new IdempotencyKeyConflictException("Idempotency key already used with a different request payload.");
+            }
+        }
+
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(()-> new ResourceNotFoundException
                         ("User not found with username: " + authentication.getName()));
