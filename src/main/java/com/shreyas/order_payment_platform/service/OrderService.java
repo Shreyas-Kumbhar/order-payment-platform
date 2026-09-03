@@ -17,6 +17,7 @@ import com.shreyas.order_payment_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,6 +30,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public OrderResponse processOrder(OrderRequest request, String idempotencyKey, Authentication authentication) {
@@ -102,7 +104,11 @@ public class OrderService {
         return toResponse(order);
     }
 
-
+    private String hashRequest(OrderRequest request) {
+        try{
+            OrderRequest orderRequest = objectMapper;
+        }
+    }
 
     private OrderResponse toResponse(Order order) {
         List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
