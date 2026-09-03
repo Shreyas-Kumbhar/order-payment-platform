@@ -36,6 +36,7 @@ public class OrderService {
         String requestHash=hashRequest(request);
 
         var existing=idempotencyKeyRepository.findByIdempotencyKey(idempotencyKey);
+
         if(existing.isPresent()){
             IdempotencyKey record=existing.get();
             if(!record.getRequestHash().equals(requestHash)){
