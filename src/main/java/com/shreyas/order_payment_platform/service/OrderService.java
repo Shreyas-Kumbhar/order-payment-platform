@@ -15,11 +15,16 @@ import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 
 @Service
@@ -106,7 +111,14 @@ public class OrderService {
 
     private String hashRequest(OrderRequest request) {
         try{
-            OrderRequest orderRequest = objectMapper;
+            String json = objectMapper.writeValueAsString(request);
+
+            MessageDigest digest=MessageDigest.getInstance("SHA-256");
+
+            byte[] hash=digest.digest(json.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Error occurred while hashing the request", e);
         }
     }
 
