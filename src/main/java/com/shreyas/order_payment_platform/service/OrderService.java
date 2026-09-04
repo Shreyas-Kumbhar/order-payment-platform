@@ -1,6 +1,7 @@
 package com.shreyas.order_payment_platform.service;
 
 import com.shreyas.order_payment_platform.entity.*;
+import com.shreyas.order_payment_platform.entity.enums.IdempotencyStatus;
 import com.shreyas.order_payment_platform.exception.IdempotencyConflictException;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import jakarta.transaction.Transactional;
@@ -24,6 +25,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
 
@@ -119,6 +121,24 @@ public class OrderService {
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("Error occurred while hashing the request", e);
+        }
+    }
+
+    private void savedIdempotencyKey(String idempotencyKey, String requestHash, OrderResponse response) {
+        try{
+            String responseJson=objectMapper.writeValueAsString(response);
+            IdempotencyKey record=IdempotencyKey.builder()
+                    .idempotencyKey(idempotencyKey)
+                    .requestHash(requestHash)
+                    .status(IdempotencyStatus.COMPLETED)
+                    .responseBody(responseJson)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            idempotencyKeyRepository.save(record);
+        }
+        catch (JsonProcessingException e){
+            throw new IllegalStateException("Error occurred while serializing the response", e);
         }
     }
 
