@@ -15,6 +15,7 @@ import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.repository.UserRepository;
+import tools.jackson.core.JacksonException;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.charset.StandardCharsets;
@@ -92,7 +93,18 @@ public class OrderService {
         }
         order.setTotalAmount(total);
         Order savedOrder=orderRepository.save(order);
-        return toResponse(savedOrder);
+        OrderResponse response=toResponse(savedOrder);
+        savedIdempotencyKey(idempotencyKey, requestHash, response);
+        return response;
+    }
+
+    private OrderResponse deserializeResponse(String response) {
+        try{
+            return objectMapper.readValue(response, OrderResponse.class);
+        }
+        catch (JacksonException e){
+            throw new RuntimeException("Failed to deserialize response body", e);
+        }
     }
 
     public List<OrderResponse> getMyOrders(Authentication authentication) {
@@ -137,7 +149,7 @@ public class OrderService {
 
             idempotencyKeyRepository.save(record);
         }
-        catch (JsonProcessingException e){
+        catch (JacksonException e){
             throw new IllegalStateException("Error occurred while serializing the response", e);
         }
     }
