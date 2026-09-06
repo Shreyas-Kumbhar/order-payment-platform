@@ -117,9 +117,13 @@ public class OrderService {
                 .toList();
     }
 
-    public OrderResponse getOrderById(Long id) {
+    public OrderResponse getOrderById(Long id, Authentication authentication) {
         Order order= orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        if(!order.getUser().getUsername().equals((authentication.getName()))){
+            throw new ResourceNotFoundException("User not found with username: " + authentication.getName());
+        }
         return toResponse(order);
     }
 
