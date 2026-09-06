@@ -41,7 +41,7 @@ public class OrderService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public OrderResponse processOrder(OrderRequest request, String idempotencyKey, Authentication authentication) {
+    public OrderResponse createOrder(OrderRequest request, String idempotencyKey, Authentication authentication) {
 
         String requestHash=hashRequest(request);
 
