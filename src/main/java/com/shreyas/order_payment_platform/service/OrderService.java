@@ -103,7 +103,7 @@ public class OrderService {
             return objectMapper.readValue(response, OrderResponse.class);
         }
         catch (JacksonException e){
-            throw new RuntimeException("Failed to deserialize response body", e);
+            throw new IllegalStateException("Failed to deserialize response body", e);
         }
     }
 
