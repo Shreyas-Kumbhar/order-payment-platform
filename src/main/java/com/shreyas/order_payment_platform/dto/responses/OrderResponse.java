@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public class OrderResponse {
-    private Long od;
+    private Long id;
     private String status;
     private BigDecimal totalAmount;
     private List<OrderItemResponse> items;
