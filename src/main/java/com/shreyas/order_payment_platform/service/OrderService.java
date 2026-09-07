@@ -102,7 +102,7 @@ public class OrderService {
         try{
             return objectMapper.readValue(response, OrderResponse.class);
         }
-        catch (JacksonException e){
+        catch (RuntimeException e){
             throw new IllegalStateException("Failed to deserialize response body", e);
         }
     }
@@ -153,7 +153,7 @@ public class OrderService {
 
             idempotencyKeyRepository.save(record);
         }
-        catch (JacksonException e){
+        catch (RuntimeException  e){
             throw new IllegalStateException("Error occurred while serializing the response", e);
         }
     }
