@@ -7,6 +7,7 @@ import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,6 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequests requests){
-        return ResponseEntity.ok(productService.createProduct(requests));
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(requests));
     }
 }
