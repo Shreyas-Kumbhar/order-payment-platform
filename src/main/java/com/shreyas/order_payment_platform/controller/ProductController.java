@@ -2,8 +2,6 @@ package com.shreyas.order_payment_platform.controller;
 
 import com.shreyas.order_payment_platform.dto.requests.ProductRequests;
 import com.shreyas.order_payment_platform.dto.responses.ProductResponse;
-import com.shreyas.order_payment_platform.entity.Product;
-import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
