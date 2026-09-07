@@ -15,6 +15,7 @@ import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import tools.jackson.core.JacksonException;
 import lombok.RequiredArgsConstructor;
 
@@ -122,7 +123,7 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
         if(!order.getUser().getUsername().equals((authentication.getName()))){
-            throw new ResourceNotFoundException("User not found with username: " + authentication.getName());
+            throw new AccessDeniedException("User not found with username: " + authentication.getName());
         }
         return toResponse(order);
     }
