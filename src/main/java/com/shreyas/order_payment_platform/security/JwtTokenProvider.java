@@ -3,6 +3,8 @@ package com.shreyas.order_payment_platform.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +16,8 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+    private final static Logger LOGGER = LoggerFactory.getLogger(JwtTokenProvider.class);
+
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
@@ -58,13 +62,13 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            System.out.println("JWT expired: " + e.getMessage());
+            LOGGER.warn("JWT expired: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            System.out.println("Invalid JWT: " + e.getMessage());
+            LOGGER.warn("Invalid JWT: {}", e.getMessage());
         } catch (SignatureException e) {
-            System.out.println("Invalid JWT signature: " + e.getMessage());
+            LOGGER.warn("Invalid JWT signature: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.out.println("JWT claims empty: " + e.getMessage());
+            LOGGER.warn("JWT claims empty: {}", e.getMessage());
         }
         return false;
     }
