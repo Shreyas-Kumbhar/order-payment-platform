@@ -151,7 +151,7 @@ public class OrderService {
                     .responseBody(responseJson)
                     .createdAt(LocalDateTime.now())
                     .build();
-
+            
             idempotencyKeyRepository.save(record);
         }
         catch (RuntimeException  e){

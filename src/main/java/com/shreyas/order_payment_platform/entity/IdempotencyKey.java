@@ -25,7 +25,7 @@ public class IdempotencyKey {
     private String requestHash;
 
     @Lob
-    @Column(name="response_body", nullable =false)
+    @Column(name="response_body", nullable = true)
     private String responseBody;
 
     @Enumerated(EnumType.STRING)
