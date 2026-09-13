@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +38,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final IdempotencyKeyRepository idempotencyKeyRepository;
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, String idempotencyKey, Authentication authentication) {
