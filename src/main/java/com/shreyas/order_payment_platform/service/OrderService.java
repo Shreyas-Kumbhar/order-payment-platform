@@ -16,7 +16,6 @@ import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import com.shreyas.order_payment_platform.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
-import tools.jackson.core.JacksonException;
 import lombok.RequiredArgsConstructor;
 
 import java.nio.charset.StandardCharsets;
