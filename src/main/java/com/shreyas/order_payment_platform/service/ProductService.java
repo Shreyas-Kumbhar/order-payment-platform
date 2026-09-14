@@ -38,6 +38,18 @@ public class ProductService {
         return toResponse(product);
     }
 
+    public ProductResponse updateProduct(Long id, ProductRequests request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        if (request.getName() != null) product.setName(request.getName());
+        if (request.getDescription() != null) product.setDescription(request.getDescription());
+        if (request.getPrice() != null) product.setPrice(request.getPrice());
+        if (request.getStockQuantity() != null) product.setStockQuantity(request.getStockQuantity());
+
+        return toResponse(productRepository.save(product));
+    }
+
     public ProductResponse updateProductById(Long id, ProductRequests request) {
         Product product=productRepository.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Product not found with id: " + id));
