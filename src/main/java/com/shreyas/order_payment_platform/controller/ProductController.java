@@ -27,11 +27,6 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductById(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody ProductRequests request){
-        return ResponseEntity.ok(productService.updateProductById(id, request));
-    }
-
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequests requests){
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.createProduct(requests));
@@ -39,7 +34,7 @@ public class ProductController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id,
-                                                         @Valid @RequestBody ProductRequests requests){
-        return ResponseEntity.ok(productService.updateProduct(id, requests));
+                                                         @Valid @RequestBody ProductRequests request){
+        return ResponseEntity.ok(productService.updateProduct(id, request));
     }
 }

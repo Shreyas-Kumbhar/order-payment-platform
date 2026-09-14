@@ -50,16 +50,6 @@ public class ProductService {
         return toResponse(productRepository.save(product));
     }
 
-    public ProductResponse updateProductById(Long id, ProductRequests request) {
-        Product product=productRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Product not found with id: " + id));
-        product.setName(request.getName());
-        product.setDescription(request.getDescription());
-        product.setPrice(request.getPrice());
-        product.setStockQuantity(request.getStockQuantity());
-        return toResponse(productRepository.save(product));
-    }
-
     private ProductResponse toResponse(Product product) {
         return new ProductResponse(
                 product.getId(),
