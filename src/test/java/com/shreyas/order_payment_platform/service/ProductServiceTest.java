@@ -12,7 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -45,11 +45,11 @@ public class ProductServiceTest {
 
         ProductResponse productResponse = productService.createProduct(requests);
 
-        assertThat("Product ID should match", productResponse.id().equals(1L));
-        assertThat("Product name should match", productResponse.name().equals(requests.getName()));
-        assertThat("Product description should match", productResponse.description().equals(requests.getDescription()));
-        assertThat("Product price should match", productResponse.price().equals(requests.getPrice()));
-        assertThat("Product stock quantity should match", productResponse.stockQuantity().equals(requests.getStockQuantity()));
+        assertThat(productResponse.id()).isEqualTo(1L);
+        assertThat(productResponse.name()).isEqualTo(requests.getName());
+        assertThat(productResponse.description()).isEqualTo(requests.getDescription());
+        assertThat(productResponse.price()).isEqualTo(requests.getPrice());
+        assertThat(productResponse.stockQuantity()).isEqualTo(requests.getStockQuantity());
     }
 
 }
