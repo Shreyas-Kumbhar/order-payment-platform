@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,6 +51,25 @@ public class ProductServiceTest {
         assertThat(productResponse.description()).isEqualTo(requests.getDescription());
         assertThat(productResponse.price()).isEqualTo(requests.getPrice());
         assertThat(productResponse.stockQuantity()).isEqualTo(requests.getStockQuantity());
+    }
+
+    @Test
+    public void getProductById_shouldReturnProduct(){
+        Product product=Product.builder()
+                .id(1L)
+                .name("test")
+                .description("test")
+                .price(new BigDecimal("10.0"))
+                .stockQuantity(100)
+                .build();
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        ProductResponse productResponse = productService.getProductById(1L);
+
+        assertThat(productResponse.id()).isEqualTo(1L);
+        assertThat(productResponse.name()).isEqualTo(product.getName());
+
     }
 
 }
