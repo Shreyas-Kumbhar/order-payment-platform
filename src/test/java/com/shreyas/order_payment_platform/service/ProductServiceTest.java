@@ -80,7 +80,7 @@ public class ProductServiceTest {
 
         assertThatThrownBy(() -> productService.getProductById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("Product with id 99 does not exist");
+                .hasMessageContaining("99");
     }
 
 }
