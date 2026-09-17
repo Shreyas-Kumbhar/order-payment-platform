@@ -2,6 +2,8 @@ package com.shreyas.order_payment_platform.service;
 
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
+import com.shreyas.order_payment_platform.dto.responses.OrderResponse;
+import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.entity.enums.Role;
@@ -14,8 +16,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderServiceTest {
@@ -72,6 +82,23 @@ public class OrderServiceTest {
                 .password("testpassword")
                 .role(Role.USER)
                 .build();
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("testuser");
+
+        when(idempotencyKeyRepository.findByIdempotencyKey("test-key")).thenReturn(Optional.empty());
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product1));
+
+        when(productRepository.findById(2L)).thenReturn(Optional.of(product2));
+
+        when(orderRepository.save(any(Order.class))).thenAnswer(i->i.getArgument(0));
+
+        OrderResponse orderResponse= orderService.createOrder(orderRequest, "test-key", authentication);
+
+        assertThat(orderResponse.totalAmount()).isEqualTo(new java.math.BigDecimal("100.00"));
 
     }
 
