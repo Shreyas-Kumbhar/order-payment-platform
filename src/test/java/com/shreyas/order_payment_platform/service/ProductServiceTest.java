@@ -113,6 +113,8 @@ public class ProductServiceTest {
         assertThat(response.name()).isEqualTo("updated test");
         assertThat(response.description()).isEqualTo("updated test");
         assertThat(response.stockQuantity()).isEqualTo(100);
+        assertThat(response.price()).isEqualByComparingTo("10.0"); // not in request, should not change
+
     }
 
 }
