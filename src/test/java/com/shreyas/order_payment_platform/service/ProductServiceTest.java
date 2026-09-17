@@ -3,6 +3,7 @@ package com.shreyas.order_payment_platform.service;
 import com.shreyas.order_payment_platform.dto.requests.ProductRequests;
 import com.shreyas.order_payment_platform.dto.responses.ProductResponse;
 import com.shreyas.order_payment_platform.entity.Product;
+import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -70,6 +72,15 @@ public class ProductServiceTest {
         assertThat(productResponse.id()).isEqualTo(1L);
         assertThat(productResponse.name()).isEqualTo(product.getName());
 
+    }
+
+    @Test
+    public void getProductById_shouldReturnEmptyOptionalWhenProductNotFound(){
+        when(productRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> productService.getProductById(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Product with id 99 does not exist");
     }
 
 }
