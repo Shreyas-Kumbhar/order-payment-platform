@@ -3,6 +3,8 @@ package com.shreyas.order_payment_platform.service;
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
 import com.shreyas.order_payment_platform.entity.Product;
+import com.shreyas.order_payment_platform.entity.User;
+import com.shreyas.order_payment_platform.entity.enums.Role;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
@@ -63,6 +65,13 @@ public class OrderServiceTest {
         OrderRequest orderRequest=new OrderRequest();
         orderRequest.setOrderItems(List.of(item1, item2));
 
+        User user= User.builder()
+                .id(200L)
+                .username("testuser")
+                .email("testuser@gmail.com")
+                .password("testpassword")
+                .role(Role.USER)
+                .build();
 
     }
 
