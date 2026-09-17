@@ -69,8 +69,8 @@ public class OrderServiceTest {
         item1.setQuantity(2);
 
         OrderItemRequest item2=new OrderItemRequest();
-        item1.setProductId(2L);
-        item1.setQuantity(4);
+        item2.setProductId(2L);
+        item2.setQuantity(4);
 
         OrderRequest orderRequest=new OrderRequest();
         orderRequest.setOrderItems(List.of(item1, item2));
