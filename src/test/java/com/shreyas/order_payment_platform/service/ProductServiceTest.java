@@ -108,9 +108,11 @@ public class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(exsiting));
         when(productRepository.save(any(Product.class))).thenReturn(saved);
 
-        assertThat(saved.getName()).isEqualTo("updated test");
-        assertThat(saved.getDescription()).isEqualTo("updated test");
-        assertThat(exsiting.getStockQuantity()).isEqualTo(100);
+        ProductResponse response=productService.updateProduct(1L,requests);
+
+        assertThat(response.name()).isEqualTo("updated test");
+        assertThat(response.description()).isEqualTo("updated test");
+        assertThat(response.stockQuantity()).isEqualTo(100);
     }
 
 }
