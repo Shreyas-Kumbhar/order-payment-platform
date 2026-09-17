@@ -7,6 +7,7 @@ import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.entity.enums.Role;
+import com.shreyas.order_payment_platform.exception.InsufficientStockException;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
@@ -135,7 +136,7 @@ public class OrderServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         assertThatThrownBy(() -> orderService.createOrder(orderRequest, "test-key", authentication))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(InsufficientStockException.class)
                 .hasMessageContaining("Insufficient stock for product: Product 1");
     }
 
