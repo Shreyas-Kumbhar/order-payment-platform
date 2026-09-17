@@ -83,4 +83,34 @@ public class ProductServiceTest {
                 .hasMessageContaining("99");
     }
 
+    @Test
+    public void updateProduct_shouldReturnProduct(){
+        Product exsiting= Product.builder()
+                .id(1L)
+                .name("test")
+                .description("test")
+                .price(new BigDecimal("10.0"))
+                .stockQuantity(100)
+                .build();
+
+        ProductRequests requests = new ProductRequests();
+        requests.setName("updated test");
+        requests.setDescription("updated test");
+
+        Product saved= Product.builder()
+                .id(1L)
+                .name("updated test")
+                .description("updated test")
+                .price(new BigDecimal("10.0"))
+                .stockQuantity(100)
+                .build();
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(exsiting));
+        when(productRepository.save(any(Product.class))).thenReturn(saved);
+
+        assertThat(saved.getName()).isEqualTo("updated test");
+        assertThat(saved.getDescription()).isEqualTo("updated test");
+        assertThat(exsiting.getStockQuantity()).isEqualTo(100);
+    }
+
 }
