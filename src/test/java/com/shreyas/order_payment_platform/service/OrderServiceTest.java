@@ -140,4 +140,9 @@ public class OrderServiceTest {
                 .hasMessageContaining("Insufficient stock for product: Product 1");
     }
 
+    @Test
+    public void createOrder_shouldReturnExistingOrderOnDuplicateKey(){
+
+    }
+
 }
