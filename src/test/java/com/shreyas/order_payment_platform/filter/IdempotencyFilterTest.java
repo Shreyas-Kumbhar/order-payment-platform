@@ -45,6 +45,7 @@ public class IdempotencyFilterTest {
 
     @Test
     void shouldPassWhenIdempotencyHeaderExist() throws Exception {
+
         MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
         mockHttpServletRequest.setMethod("POST");
         mockHttpServletRequest.setRequestURI("/api/orders");
