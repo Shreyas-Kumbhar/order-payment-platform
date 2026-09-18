@@ -179,7 +179,7 @@ public class OrderServiceTest {
 
         OrderResponse orderResponse = orderService.createOrder(orderRequest, "test-key", authentication);
 
-        assertThat(orderResponse.totalAmount()).isEqualTo(new java.math.BigDecimal("100.00"));
+        assertThat(orderResponse.totalAmount()).isEqualByComparingTo("100.00");
     }
 
     private String sha256(String value) {
