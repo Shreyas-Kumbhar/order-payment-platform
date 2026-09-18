@@ -212,7 +212,6 @@ public class OrderServiceTest {
             when(idempotencyKeyRepository.findByIdempotencyKey("test-key")).thenReturn(Optional.of(existingKey));
 
             Authentication authentication = mock(Authentication.class);
-            when(authentication.getName()).thenReturn("testuser");
 
             assertThatThrownBy(() -> orderService.createOrder(orderRequest, "test-key", authentication))
                     .isInstanceOf(IdempotencyConflictException.class);
