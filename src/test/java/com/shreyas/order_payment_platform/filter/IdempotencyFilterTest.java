@@ -12,8 +12,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class IdempotencyFilterTest {
@@ -57,7 +56,7 @@ public class IdempotencyFilterTest {
 
         assertThat(mockHttpServletResponse.getStatus()).isEqualTo(200);
 
-        verify(filterChain, never()).doFilter(any(), any());
+        verify(filterChain, times(1)).doFilter(mockHttpServletRequest, mockHttpServletResponse);
     }
 
 }
