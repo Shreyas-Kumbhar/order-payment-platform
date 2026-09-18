@@ -24,7 +24,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +57,7 @@ public class OrderServiceTest {
     @Test
     public void createOrder_shouldReturnTotalCorrectly() {
 
-        Product product1=Product.builder()
+        Product product1 = Product.builder()
                 .id(1L)
                 .name("Product 1")
                 .description("Product 1")
@@ -63,7 +65,7 @@ public class OrderServiceTest {
                 .stockQuantity(100)
                 .build();
 
-        Product product2=Product.builder()
+        Product product2 = Product.builder()
                 .id(2L)
                 .name("Product 2")
                 .description("Product 2")
@@ -71,18 +73,18 @@ public class OrderServiceTest {
                 .stockQuantity(100)
                 .build();
 
-        OrderItemRequest item1=new OrderItemRequest();
+        OrderItemRequest item1 = new OrderItemRequest();
         item1.setProductId(1L);
         item1.setQuantity(2);
 
-        OrderItemRequest item2=new OrderItemRequest();
+        OrderItemRequest item2 = new OrderItemRequest();
         item2.setProductId(2L);
         item2.setQuantity(4);
 
-        OrderRequest orderRequest=new OrderRequest();
+        OrderRequest orderRequest = new OrderRequest();
         orderRequest.setOrderItems(List.of(item1, item2));
 
-        User user= User.builder()
+        User user = User.builder()
                 .id(200L)
                 .username("testuser")
                 .email("testuser@gmail.com")
@@ -101,17 +103,17 @@ public class OrderServiceTest {
 
         when(productRepository.findById(2L)).thenReturn(Optional.of(product2));
 
-        when(orderRepository.save(any(Order.class))).thenAnswer(i->i.getArgument(0));
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
 
-        OrderResponse orderResponse= orderService.createOrder(orderRequest, "test-key", authentication);
+        OrderResponse orderResponse = orderService.createOrder(orderRequest, "test-key", authentication);
 
         assertThat(orderResponse.totalAmount()).isEqualTo(new java.math.BigDecimal("100.00"));
 
     }
 
     @Test
-    public void createOrder_shouldReturnInsufficientStockCorrectly(){
-        Product product=Product.builder()
+    public void createOrder_shouldReturnInsufficientStockCorrectly() {
+        Product product = Product.builder()
                 .id(1L)
                 .name("Product 1")
                 .description("Product 1")
@@ -119,14 +121,14 @@ public class OrderServiceTest {
                 .stockQuantity(1)
                 .build();
 
-        OrderItemRequest item1=new OrderItemRequest();
+        OrderItemRequest item1 = new OrderItemRequest();
         item1.setProductId(1L);
         item1.setQuantity(2);
 
-        OrderRequest orderRequest=new OrderRequest();
+        OrderRequest orderRequest = new OrderRequest();
         orderRequest.setOrderItems(List.of(item1));
 
-        User user= User.builder()
+        User user = User.builder()
                 .id(200L)
                 .username("testuser")
                 .email("testUser@gmail.com")
@@ -146,24 +148,24 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void createOrder_shouldReturnExistingOrderOnDuplicateKey(){
-        OrderItemRequest item1=new OrderItemRequest();
+    public void createOrder_shouldReturnExistingOrderOnDuplicateKey() {
+        OrderItemRequest item1 = new OrderItemRequest();
         item1.setProductId(1L);
         item1.setQuantity(2);
 
         String requestHash = sha256("1:2|");
 
-        OrderRequest orderRequest=new OrderRequest();
+        OrderRequest orderRequest = new OrderRequest();
         orderRequest.setOrderItems(List.of(item1));
 
-        IdempotencyKey existingKey=IdempotencyKey.builder()
+        IdempotencyKey existingKey = IdempotencyKey.builder()
                 .idempotencyKey("test-key")
                 .requestHash(requestHash)
                 .responseBody("42")
                 .status(IdempotencyStatus.COMPLETED)
                 .build();
 
-        Order mainOrder= Order.builder()
+        Order mainOrder = Order.builder()
                 .id(42L)
                 .orderStatus(OrderStatus.CONFIRMED)
                 .totalAmount(new java.math.BigDecimal("100.00"))
@@ -175,16 +177,19 @@ public class OrderServiceTest {
 
         Authentication authentication = mock(Authentication.class);
 
-        OrderResponse orderResponse= orderService.createOrder(orderRequest, "test-key", authentication);
+        OrderResponse orderResponse = orderService.createOrder(orderRequest, "test-key", authentication);
 
         assertThat(orderResponse.totalAmount()).isEqualTo(new java.math.BigDecimal("100.00"));
     }
 
-    private String sha256(String value){
+    private String sha256(String value) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(value.getBytes());
-        } catch (Exception e) {
-    }
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
 
+    }
 }
