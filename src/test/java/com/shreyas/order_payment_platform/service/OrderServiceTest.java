@@ -193,7 +193,7 @@ public class OrderServiceTest {
             throw new RuntimeException(e);
         }
     }
-
+        @Test
         public void createOrder_shouldThrowConflictWhenSameKey(){
             IdempotencyKey existingKey = IdempotencyKey.builder()
                     .idempotencyKey("test-key")
