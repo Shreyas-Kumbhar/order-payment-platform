@@ -10,6 +10,7 @@ import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.entity.enums.IdempotencyStatus;
 import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
 import com.shreyas.order_payment_platform.entity.enums.Role;
+import com.shreyas.order_payment_platform.exception.IdempotencyConflictException;
 import com.shreyas.order_payment_platform.exception.InsufficientStockException;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
@@ -191,6 +192,31 @@ public class OrderServiceTest {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-
     }
+
+        public void createOrder_shouldThrowConflictWhenSameKey(){
+            IdempotencyKey existingKey = IdempotencyKey.builder()
+                    .idempotencyKey("test-key")
+                    .requestHash("some-hash")
+                    .responseBody("42")
+                    .status(IdempotencyStatus.COMPLETED)
+                    .build();
+
+            OrderItemRequest item1 = new OrderItemRequest();
+            item1.setProductId(1L);
+            item1.setQuantity(2);
+
+            OrderRequest orderRequest = new OrderRequest();
+            orderRequest.setOrderItems(List.of(item1));
+
+            when(idempotencyKeyRepository.findByIdempotencyKey("test-key")).thenReturn(Optional.of(existingKey));
+
+            Authentication authentication = mock(Authentication.class);
+            when(authentication.getName()).thenReturn("testuser");
+
+            assertThatThrownBy(() -> orderService.createOrder(orderRequest, "test-key", authentication))
+                    .isInstanceOf(IdempotencyConflictException.class);
+
+        }
+
 }
