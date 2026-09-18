@@ -44,5 +44,20 @@ public class IdempotencyFilterTest {
 
     }
 
+    @Test
+    void shouldPassWhenIdempotencyHeaderExist() throws Exception {
+        MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+        mockHttpServletRequest.setMethod("POST");
+        mockHttpServletRequest.setRequestURI("/api/orders");
+        mockHttpServletRequest.addHeader("Idempotency-Key", "test-key");
+
+        MockHttpServletResponse mockHttpServletResponse = new MockHttpServletResponse();
+
+        idempotencyFilter.doFilterInternal(mockHttpServletRequest, mockHttpServletResponse, filterChain);
+
+        assertThat(mockHttpServletResponse.getStatus()).isEqualTo(200);
+
+        verify(filterChain, never()).doFilter(any(), any());
+    }
 
 }
