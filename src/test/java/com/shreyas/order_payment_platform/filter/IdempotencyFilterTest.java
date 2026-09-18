@@ -27,7 +27,6 @@ public class IdempotencyFilterTest {
     @InjectMocks
     private IdempotencyFilter idempotencyFilter;
 
-
     @Test
     void shouldThrow400WhenIdempotencyKeyNotFound() throws Exception {
         MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
