@@ -3,9 +3,12 @@ package com.shreyas.order_payment_platform.service;
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
 import com.shreyas.order_payment_platform.dto.responses.OrderResponse;
+import com.shreyas.order_payment_platform.entity.IdempotencyKey;
 import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
+import com.shreyas.order_payment_platform.entity.enums.IdempotencyStatus;
+import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
 import com.shreyas.order_payment_platform.entity.enums.Role;
 import com.shreyas.order_payment_platform.exception.InsufficientStockException;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
@@ -20,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -142,7 +146,37 @@ public class OrderServiceTest {
 
     @Test
     public void createOrder_shouldReturnExistingOrderOnDuplicateKey(){
+        OrderItemRequest item1=new OrderItemRequest();
+        item1.setProductId(1L);
+        item1.setQuantity(2);
 
+        String requestHash = sha256("1:2|");
+
+        OrderRequest orderRequest=new OrderRequest();
+        orderRequest.setOrderItems(List.of(item1));
+
+        IdempotencyKey existingKey=IdempotencyKey.builder()
+                .idempotencyKey("test-key")
+                .requestHash(requestHash)
+                .responseBody("42")
+                .status(IdempotencyStatus.COMPLETED)
+                .build();
+
+        Order mainOrder= Order.builder()
+                .id(42L)
+                .orderStatus(OrderStatus.CONFIRMED)
+                .totalAmount(new java.math.BigDecimal("100.00"))
+                .orderItems(new ArrayList<>())
+                .build();
+
+        when(idempotencyKeyRepository.findByIdempotencyKey("test-key")).thenReturn(Optional.of(existingKey));
+        when(orderRepository.findById(42L)).thenReturn(Optional.of(mainOrder));
+
+        Authentication authentication = mock(Authentication.class);
+
+        OrderResponse orderResponse= orderService.createOrder(orderRequest, "test-key", authentication);
+
+        assertThat(orderResponse.totalAmount()).isEqualTo(new java.math.BigDecimal("100.00"));
     }
 
 }
