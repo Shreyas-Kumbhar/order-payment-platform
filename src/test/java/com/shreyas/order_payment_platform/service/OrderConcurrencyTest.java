@@ -1,5 +1,6 @@
 package com.shreyas.order_payment_platform.service;
 
+import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
@@ -30,6 +31,13 @@ public class OrderConcurrencyTest {
     @Test
     void onlyOneOrderSuceedWhenTwoThreadsRaceConditionForLastStock() throws InterruptedException {
 
+        Product product = Product.builder()
+                .id(1L)
+                .name("Product 1")
+                .description("Product 1")
+                .price(new java.math.BigDecimal("10.0"))
+                .stockQuantity(1)
+                .build();
 
     }
 }
