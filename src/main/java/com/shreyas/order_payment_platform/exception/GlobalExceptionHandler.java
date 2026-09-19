@@ -42,6 +42,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ex.getMessage());
     }
 
+    @ExceptionHandler(jakarta.persistence.OptimisticLockException.class)
+    public ResponseEntity<String> handleOptimisticLockException(jakarta.persistence.OptimisticLockException ex){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("Order could not be completed due to a conflict. Please try again.");
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException ex){
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
@@ -55,8 +60,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
 
-    @ExceptionHandler(jakarta.persistence.OptimisticLockException.class)
-    public ResponseEntity<String> handleOptimisticLockException(jakarta.persistence.OptimisticLockException ex){
-        return ResponseEntity.status(HttpStatus.CONFLICT).body("Order could not be completed due to a conflict. Please try again.");
-    }
 }
