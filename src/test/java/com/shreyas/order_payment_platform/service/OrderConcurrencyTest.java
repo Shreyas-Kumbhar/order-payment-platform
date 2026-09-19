@@ -12,8 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderConcurrencyTest {
@@ -55,6 +59,9 @@ public class OrderConcurrencyTest {
 
         OrderRequest orderRequest=new OrderRequest();
         orderRequest.setOrderItems(List.of(orderItemRequest));
+
+        Authentication authentication=mock(Authentication.class);
+        when(authentication.getName()).thenReturn("test-user");
 
     }
 }
