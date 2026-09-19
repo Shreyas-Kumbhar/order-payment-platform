@@ -54,4 +54,9 @@ public class GlobalExceptionHandler {
                 .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+    @ExceptionHandler(jakarta.persistence.OptimisticLockException.class)
+    public ResponseEntity<String> handleOptimisticLockException(jakarta.persistence.OptimisticLockException ex){
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("Order could not be completed due to a conflict. Please try again.");
+    }
 }
