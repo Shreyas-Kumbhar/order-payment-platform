@@ -28,6 +28,7 @@ public class ProductService {
         return toResponse(savedProduct);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
         List<Product> products = productRepository.findAll();
         return products.stream()
