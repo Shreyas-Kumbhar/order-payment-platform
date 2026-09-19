@@ -41,6 +41,7 @@ public class ProductService {
         return toResponse(product);
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequests request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
