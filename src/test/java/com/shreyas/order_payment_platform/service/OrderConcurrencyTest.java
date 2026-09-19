@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -62,6 +63,11 @@ public class OrderConcurrencyTest {
 
         Authentication authentication=mock(Authentication.class);
         when(authentication.getName()).thenReturn("test-user");
+
+        when(idempotencyKeyRepository.findByIdempotencyKey("key-1")).thenReturn(Optional.empty());
+        when(idempotencyKeyRepository.findByIdempotencyKey("key-2")).thenReturn(Optional.empty());
+
+
 
     }
 }
