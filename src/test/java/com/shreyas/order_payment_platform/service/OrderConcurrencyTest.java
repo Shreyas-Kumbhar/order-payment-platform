@@ -1,5 +1,7 @@
 package com.shreyas.order_payment_platform.service;
 
+import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
+import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
@@ -10,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderConcurrencyTest {
@@ -45,6 +49,12 @@ public class OrderConcurrencyTest {
                 .username("test-user")
                 .build();
 
+        OrderItemRequest orderItemRequest=new OrderItemRequest();
+        orderItemRequest.setProductId(1L);
+        orderItemRequest.setQuantity(1);
+
+        OrderRequest orderRequest=new OrderRequest();
+        orderRequest.setOrderItems(List.of(orderItemRequest));
 
     }
 }
