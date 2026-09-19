@@ -67,7 +67,8 @@ public class OrderConcurrencyTest {
         when(idempotencyKeyRepository.findByIdempotencyKey("key-1")).thenReturn(Optional.empty());
         when(idempotencyKeyRepository.findByIdempotencyKey("key-2")).thenReturn(Optional.empty());
 
-
+        when(userRepository.findByUsername("test-user")).thenReturn(Optional.of(user));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
     }
 }
