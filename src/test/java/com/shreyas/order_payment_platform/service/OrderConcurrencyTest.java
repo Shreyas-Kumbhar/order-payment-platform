@@ -5,6 +5,7 @@ import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
 import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
+import com.shreyas.order_payment_platform.exception.InsufficientStockException;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.ProductRepository;
@@ -17,6 +18,10 @@ import org.springframework.security.core.Authentication;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -72,5 +77,41 @@ public class OrderConcurrencyTest {
         when(userRepository.findByUsername("test-user")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+
+        ExecutorService executorService = Executors.newFixedThreadPool(2);
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        Runnable thread1 = () -> {
+            try{
+                countDownLatch.await();
+                orderService.createOrder(orderRequest, "key-1", authentication);
+                successCount.incrementAndGet();
+            }
+            catch(InsufficientStockException e){
+                failureCount.incrementAndGet();
+            }
+            catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+            }
+        };
+
+
+        Runnable thread2 = () -> {
+            try{
+                countDownLatch.await();
+                orderService.createOrder(orderRequest, "key-2", authentication);
+                successCount.incrementAndGet();
+            }
+            catch(InsufficientStockException e){
+                failureCount.incrementAndGet();
+            }
+            catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+            }
+        };
+
     }
 }
