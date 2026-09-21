@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -120,7 +121,9 @@ public class OrderConcurrencyTest {
 
         executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
 
-
+        assertThat(successCount.get()+failureCount.get()).isEqualTo(2);
+        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(failureCount.get()).isEqualTo(1);
 
     }
 }
