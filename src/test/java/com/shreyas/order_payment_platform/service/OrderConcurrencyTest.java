@@ -108,7 +108,6 @@ public class OrderConcurrencyTest {
             }
         };
 
-
         Runnable thread2 = () -> {
             try{
                 countDownLatch.await();
