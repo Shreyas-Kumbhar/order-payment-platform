@@ -2,6 +2,7 @@ package com.shreyas.order_payment_platform.service;
 
 import com.shreyas.order_payment_platform.dto.requests.OrderItemRequest;
 import com.shreyas.order_payment_platform.dto.requests.OrderRequest;
+import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Product;
 import com.shreyas.order_payment_platform.entity.User;
 import com.shreyas.order_payment_platform.repository.IdempotencyKeyRepository;
@@ -17,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import java.util.List;
 import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -69,6 +71,6 @@ public class OrderConcurrencyTest {
 
         when(userRepository.findByUsername("test-user")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArguments()[0]);
     }
 }
