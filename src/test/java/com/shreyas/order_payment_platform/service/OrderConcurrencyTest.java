@@ -77,7 +77,15 @@ public class OrderConcurrencyTest {
         when(idempotencyKeyRepository.findByIdempotencyKey("key-2")).thenReturn(Optional.empty());
 
         when(userRepository.findByUsername("test-user")).thenReturn(Optional.of(user));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findById(1L))
+                .thenReturn(Optional.of(product))
+                .thenReturn(Optional.of(Product.builder()
+                        .id(1L)
+                        .name("Product 1")
+                        .description("Product 1")
+                        .price(new java.math.BigDecimal("10.0"))
+                        .stockQuantity(0)  // stock already gone
+                        .build()));
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArguments()[0]);
 
         AtomicInteger successCount = new AtomicInteger(0);
