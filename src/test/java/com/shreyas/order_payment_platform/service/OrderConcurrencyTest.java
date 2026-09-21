@@ -113,5 +113,14 @@ public class OrderConcurrencyTest {
             }
         };
 
+        executorService.submit(thread1);
+        executorService.submit(thread2);
+        countDownLatch.countDown();
+        executorService.shutdown();
+
+        executorService.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
+
+
+
     }
 }
