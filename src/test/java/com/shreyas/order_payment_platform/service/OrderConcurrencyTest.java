@@ -39,7 +39,7 @@ public class OrderConcurrencyTest {
     private OrderService orderService;
 
     @Test
-    void onlyOneOrderSuceedWhenTwoThreadsRaceConditionForLastStock() throws InterruptedException {
+    void onlyOneOrderSucceedWhenTwoThreadsRaceConditionForLastStock() throws InterruptedException {
 
         Product product = Product.builder()
                 .id(1L)
