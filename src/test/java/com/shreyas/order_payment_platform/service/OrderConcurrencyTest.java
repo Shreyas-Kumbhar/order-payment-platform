@@ -95,7 +95,6 @@ public class OrderConcurrencyTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         Runnable thread1 = () -> {
-
             try{
                 countDownLatch.await();
                 orderService.createOrder(orderRequest, "key-1", authentication);
@@ -110,7 +109,6 @@ public class OrderConcurrencyTest {
         };
 
         Runnable thread2 = () -> {
-
             try{
                 countDownLatch.await();
                 orderService.createOrder(orderRequest, "key-2", authentication);
