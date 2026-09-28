@@ -11,5 +11,6 @@ public record PaymentResponse(
             String failureReason,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
-    ) {}
+    )
+{}
 
