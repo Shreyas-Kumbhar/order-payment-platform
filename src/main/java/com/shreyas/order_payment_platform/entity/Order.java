@@ -40,6 +40,9 @@ public class Order {
     )
     private List<OrderItem> orderItems=new ArrayList<>();
 
+    @OneToOne(mappedBy = "order", cascade=CascadeType.ALL, fetch = FetchType.LAZY)
+    private Payment payment;
+
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
