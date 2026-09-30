@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Random;
+
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -60,9 +62,12 @@ public class PaymentService {
         return toResponse(payment);
     }
 
+    private boolean mockPaymentProcessor(){
+        return new Random().nextInt(10)<8;
+    }
+
     private PaymentResponse toResponse(Order order){
 
     }
 
-    private boolean mockPaymentProcessor(){}
 }
