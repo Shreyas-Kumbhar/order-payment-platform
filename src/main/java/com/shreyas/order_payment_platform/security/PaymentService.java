@@ -3,6 +3,7 @@ package com.shreyas.order_payment_platform.security;
 import com.shreyas.order_payment_platform.dto.responses.PaymentResponse;
 import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Payment;
+import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
 import com.shreyas.order_payment_platform.entity.enums.PaymentStatus;
 import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
@@ -18,11 +19,11 @@ public class PaymentService {
     private final OrderRepository orderRepository;
 
     @Transactional
-    public PaymentResponse processPayment(Long orderid){
+    public PaymentResponse processPayment(Long orderId){
 
-        Order order= orderRepository.findById(orderid).orElseThrow(()-> new ResourceNotFoundException("Order not found with id: "+orderid));
+        Order order= orderRepository.findById(orderId).orElseThrow(()-> new ResourceNotFoundException("Order not found with id: "+orderId));
 
-        var existing= paymentRepository.findByOrderId(orderid);
+        var existing= paymentRepository.findByOrderId(orderId);
         if(existing.isPresent()){
             return toResponse(existing.get());
         }
@@ -37,10 +38,25 @@ public class PaymentService {
 
         payment.setPaymentStatus(PaymentStatus.PROCESSING);
 
+        boolean success= mockPaymentProcessor();
+
+        if(success){
+            payment.setPaymentStatus(PaymentStatus.SUCCESS);
+            order.setOrderStatus(OrderStatus.CONFIRMED);
+        }
+        else{
+            payment.setPaymentStatus(PaymentStatus.FAILED);
+            payment.setFailureReason("Payment declined by mock processor");
+            order.setOrderStatus(OrderStatus.FAILED);
+        }
+        orderRepository.save(order);
+        return toResponse(paymentRepository.save(payment));
 
     }
 
     private PaymentResponse toResponse(Order order){
 
     }
+
+    private boolean mockPaymentProcessor(){}
 }
