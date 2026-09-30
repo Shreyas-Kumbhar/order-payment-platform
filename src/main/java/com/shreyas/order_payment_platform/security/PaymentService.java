@@ -33,7 +33,10 @@ public class PaymentService {
                 .paymentStatus(PaymentStatus.PENDING)
                 .build();
 
-        Payment savedPayment=paymentRepository.save(payment);
+        payment=paymentRepository.save(payment);
+
+        payment.setPaymentStatus(PaymentStatus.PROCESSING);
+
 
     }
 
