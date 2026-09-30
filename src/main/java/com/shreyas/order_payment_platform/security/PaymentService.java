@@ -2,6 +2,8 @@ package com.shreyas.order_payment_platform.security;
 
 import com.shreyas.order_payment_platform.dto.responses.PaymentResponse;
 import com.shreyas.order_payment_platform.entity.Order;
+import com.shreyas.order_payment_platform.entity.Payment;
+import com.shreyas.order_payment_platform.entity.enums.PaymentStatus;
 import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.PaymentRepository;
@@ -24,6 +26,14 @@ public class PaymentService {
         if(existing.isPresent()){
             return toResponse(existing.get());
         }
+
+        Payment payment= Payment.builder()
+                .order(order)
+                .amount(order.getTotalAmount())
+                .paymentStatus(PaymentStatus.PENDING)
+                .build();
+
+        Payment savedPayment=paymentRepository.save(payment);
 
     }
 
