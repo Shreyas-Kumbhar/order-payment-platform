@@ -54,6 +54,11 @@ public class PaymentService {
 
     }
 
+    public PaymentResponse getPaymentById(Long id){
+        Payment payment=paymentRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Payment not found with id: "+id));
+        return toResponse(payment);
+    }
     private PaymentResponse toResponse(Order order){
 
     }
