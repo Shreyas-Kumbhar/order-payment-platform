@@ -69,8 +69,8 @@ public class PaymentService {
     private PaymentResponse toResponse(Payment payment) {
         return new PaymentResponse(
                 payment.getId(),
-                payment.getOrder().getId(),
                 payment.getPaymentStatus().name(),
+                payment.getOrder().getId(),
                 payment.getAmount(),
                 payment.getFailureReason(),
                 payment.getCreatedAt(),
