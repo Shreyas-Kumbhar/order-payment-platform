@@ -20,6 +20,14 @@ public class PaymentService {
 
         Order order= orderRepository.findById(orderid).orElseThrow(()-> new ResourceNotFoundException("Order not found with id: "+orderid));
 
+        var existing= paymentRepository.findByOrderId(orderid);
+        if(existing.isPresent()){
+            return toResponse(existing.get());
+        }
+
+    }
+
+    private PaymentResponse toResponse(Order order){
 
     }
 }
