@@ -66,8 +66,16 @@ public class PaymentService {
         return new Random().nextInt(10)<8;
     }
 
-    private PaymentResponse toResponse(Order order){
-
+    private PaymentResponse toResponse(Payment payment) {
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getOrder().getId(),
+                payment.getPaymentStatus().name(),
+                payment.getAmount(),
+                payment.getFailureReason(),
+                payment.getCreatedAt(),
+                payment.getUpdatedAt()
+        );
     }
 
 }
