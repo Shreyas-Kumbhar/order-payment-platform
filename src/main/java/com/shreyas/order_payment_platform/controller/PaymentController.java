@@ -4,10 +4,7 @@ import com.shreyas.order_payment_platform.dto.responses.PaymentResponse;
 import com.shreyas.order_payment_platform.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -18,5 +15,10 @@ public class PaymentController {
     @PostMapping("/{id}")
     public ResponseEntity<PaymentResponse> processPayment(@PathVariable Long id){
         return ResponseEntity.ok(paymentService.processPayment(id));
+    }
+
+    @GetMapping("{id}")
+    public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable Long id){
+        return ResponseEntity.ok(paymentService.getPaymentById(id));
     }
 }
