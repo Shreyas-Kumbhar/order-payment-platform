@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
     private final PaymentService paymentService;
 
-    @PostMapping("/{id}")
-    public ResponseEntity<PaymentResponse> processPayment(@PathVariable Long id){
-        return ResponseEntity.ok(paymentService.processPayment(id));
+    @PostMapping("/{orderId}")
+    public ResponseEntity<PaymentResponse> processPayment(@PathVariable Long orderId){
+        return ResponseEntity.ok(paymentService.processPayment(orderId));
     }
 
     @GetMapping("/{id}")
