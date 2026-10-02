@@ -4,6 +4,7 @@ import com.shreyas.order_payment_platform.dto.responses.PaymentResponse;
 import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Payment;
 import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
+import com.shreyas.order_payment_platform.entity.enums.PaymentStatus;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.PaymentRepository;
 import org.junit.jupiter.api.Test;
@@ -60,5 +61,20 @@ public class PaymentServiceTest {
                 .orderStatus(OrderStatus.CONFIRMED)
                 .totalAmount(new BigDecimal("100.00"))
                 .build();
+
+        Payment existingPayment= Payment.builder()
+                .id(1L)
+                .paymentStatus(PaymentStatus.SUCCESS)
+                .order(order)
+                .amount(new BigDecimal("100.00"))
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(1L)).thenReturn(Optional.of(existingPayment));
+
+        PaymentResponse response=paymentService.processPayment(1L);
+
+        assertThat(response.status()).isEqualTo(PaymentStatus.SUCCESS);
+        assertThat(response.amount()).isEqualByComparingTo("100.00");
     }
 }
