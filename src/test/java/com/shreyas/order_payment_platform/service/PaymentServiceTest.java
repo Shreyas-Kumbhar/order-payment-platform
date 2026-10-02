@@ -43,7 +43,7 @@ public class PaymentServiceTest {
                 .build();
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(paymentRepository.findById(1L)).thenReturn(Optional.empty());
+        when(paymentRepository.findByOrderId(1L)).thenReturn(Optional.empty());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(i->i.getArguments(0));
 
         PaymentResponse response=paymentService.processPayment(1L);
