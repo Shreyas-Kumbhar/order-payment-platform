@@ -48,7 +48,7 @@ public class PaymentServiceTest {
 
         PaymentResponse response=paymentService.processPayment(1L);
 
-        assertThat(response.status()).isIn("SUCCESS","FAILURE");
+        assertThat(response.status()).isIn("SUCCESS","FAILED");
         assertThat(response.amount()).isEqualByComparingTo("100.00");
     }
 
