@@ -86,6 +86,6 @@ public class PaymentServiceTest {
         when(orderRepository.findById(99L)).thenReturn(Optional.empty());
         assertThatThrownBy(()->paymentService.processPayment(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessage("Order not found");
+                .hasMessageContaining("99");
     }
 }
