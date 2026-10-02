@@ -5,6 +5,7 @@ import com.shreyas.order_payment_platform.entity.Order;
 import com.shreyas.order_payment_platform.entity.Payment;
 import com.shreyas.order_payment_platform.entity.enums.OrderStatus;
 import com.shreyas.order_payment_platform.entity.enums.PaymentStatus;
+import com.shreyas.order_payment_platform.exception.ResourceNotFoundException;
 import com.shreyas.order_payment_platform.repository.OrderRepository;
 import com.shreyas.order_payment_platform.repository.PaymentRepository;
 import org.junit.jupiter.api.Test;
@@ -12,12 +13,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.crossstore.ChangeSetPersister;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -76,5 +79,13 @@ public class PaymentServiceTest {
 
         assertThat(response.status()).isEqualTo("SUCCESS");
         assertThat(response.amount()).isEqualByComparingTo("100.00");
+    }
+
+    @Test
+    public void processPayment_shouldReturnOrderNotFoundException(){
+        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThatThrownBy(()->paymentRepository.findByOrderId(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Order not found");
     }
 }
