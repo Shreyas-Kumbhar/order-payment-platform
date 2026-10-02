@@ -84,7 +84,7 @@ public class PaymentServiceTest {
     @Test
     public void processPayment_shouldReturnOrderNotFoundException(){
         when(orderRepository.findById(99L)).thenReturn(Optional.empty());
-        assertThatThrownBy(()->paymentRepository.findByOrderId(99L))
+        assertThatThrownBy(()->paymentService.processPayment(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Order not found");
     }
