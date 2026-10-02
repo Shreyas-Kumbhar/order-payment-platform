@@ -52,4 +52,8 @@ public class PaymentServiceTest {
         assertThat(response.amount()).isEqualByComparingTo("100.00");
     }
 
+    @Test
+    public void processPayment_shouldReturnExistingPaymentIfAlreadyProcessed(){
+
+    }
 }
