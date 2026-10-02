@@ -54,6 +54,11 @@ public class PaymentServiceTest {
 
     @Test
     public void processPayment_shouldReturnExistingPaymentIfAlreadyProcessed(){
-
+        Order order=Order.builder()
+                .id(1L)
+                .orderItems(new ArrayList<>())
+                .orderStatus(OrderStatus.CONFIRMED)
+                .totalAmount(new BigDecimal("100.00"))
+                .build();
     }
 }
