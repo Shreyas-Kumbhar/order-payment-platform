@@ -33,7 +33,7 @@ public class PaymentServiceTest {
     private PaymentService paymentService;
 
     @Test
-    public void proccesspayment_shouldReturnSuccessOrFailure() {
+    public void proccessPayment_shouldReturnSuccessOrFailure() {
 
         Order order=Order.builder()
                 .id(1L)
