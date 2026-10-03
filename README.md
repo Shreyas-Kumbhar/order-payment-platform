@@ -1,53 +1,86 @@
 # Order & Payment Processing Platform
 
-A Spring Boot REST API backend focused on backend engineering depth: idempotent request handling, concurrency-safe inventory management, a payment state machine, and JWT-secured role-based access control.
+A Spring Boot REST API for processing e-commerce orders and payments reliably under real-world failure conditions: duplicate requests, concurrent inventory access, and payment failures.
 
 ![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen?logo=springboot)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)
+![Tests](https://img.shields.io/badge/Tests-15%20passing-success)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Architecture](#architecture)
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [API Endpoints](#api-endpoints)
-- [Authentication](#authentication)
-- [Idempotency Design](#idempotency-design)
-- [Concurrency & Optimistic Locking](#concurrency--optimistic-locking)
-- [Payment State Machine](#payment-state-machine)
-- [Database Design](#database-design)
-- [Error Handling](#error-handling)
-- [Testing](#testing)
-- [Docker Setup](#docker-setup)
-- [Environment Variables](#environment-variables)
-- [Running Locally](#running-locally)
-- [Example Requests](#example-requests)
-- [Backend Engineering Concepts Demonstrated](#backend-engineering-concepts-demonstrated)
-- [Design Decisions](#design-decisions)
-- [Future Improvements](#future-improvements)
-- [Why This Project Is Interesting](#why-this-project-is-interesting)
-- [License](#license)
-- [Author](#author)
+1. [Overview](#overview)
+2. [Features](#features)
+3. [Architecture](#architecture)
+4. [Tech Stack](#tech-stack)
+5. [Quick Start](#quick-start)
+6. [Configuration](#configuration)
+7. [API Reference](#api-reference)
+8. [Core Design](#core-design)
+9. [Database Schema](#database-schema)
+10. [Error Handling](#error-handling)
+11. [Testing](#testing)
+12. [Project Structure](#project-structure)
+13. [Design Rationale](#design-rationale)
+14. [Known Limitations](#known-limitations)
+15. [Roadmap](#roadmap)
+16. [License](#license)
+17. [Author](#author)
 
 ---
 
-## Project Overview
+## Overview
 
-This project is a backend REST API that processes e-commerce orders and payments reliably under real-world failure conditions — duplicate requests, concurrent inventory access, and payment failures.
+This service goes beyond CRUD to address the correctness problems that appear in production order systems:
 
-The core focus is not CRUD, but backend engineering depth:
+| Concern | Approach |
+|---------|----------|
+| Duplicate requests | Idempotency keys with SHA-256 request fingerprinting |
+| Concurrent stock updates | Optimistic locking via JPA `@Version` |
+| Payment lifecycle | Explicit state machine with timestamped transitions |
+| Partial failures | Transactional service methods with atomic rollback |
+| Access control | Stateless JWT authentication with role-based authorization |
 
-- **Idempotency** — retried requests never create duplicate orders or double charges
-- **Optimistic locking** — concurrent stock updates never oversell inventory
-- **Payment state machine** — auditable payment lifecycle, not a boolean flag
-- **Transaction integrity** — partial failures roll back atomically
+The idempotency and concurrency behaviors are covered by automated tests (see [Testing](#testing)).
+
+---
+
+## Features
+
+**Authentication & Authorization**
+- Stateless JWT authentication with BCrypt password hashing
+- `USER` and `ADMIN` roles enforced at the endpoint level
+- Requests with missing or invalid tokens are rejected
+
+**Order Management**
+- Multi-item orders with stock validation
+- Price snapshot at purchase time, unaffected by later price changes
+- Status lifecycle: `PENDING` → `CONFIRMED` / `FAILED`
+- Users retrieve their own orders; admins can retrieve any order
+
+**Inventory**
+- Transactional stock deduction with rollback on failure
+- Optimistic locking prevents overselling under concurrent load
+- Insufficient stock returns `422 Unprocessable Entity`
+
+**Idempotency**
+- `Idempotency-Key` header required on `POST /api/orders`
+- Replays with the same key and payload return the original response
+- Reuse of a key with a different payload returns `409 Conflict`
+
+**Payments**
+- State machine: `PENDING` → `PROCESSING` → `SUCCESS` / `FAILED`
+- Mock processor simulates success and failure outcomes
+- Repeat payment calls on the same order are idempotent
+
+**API Quality**
+- Centralized exception handling via `@RestControllerAdvice`
+- Field-level validation errors with `400 Bad Request`
+- OpenAPI documentation via Swagger UI
 
 ---
 
@@ -85,42 +118,7 @@ erDiagram
     IDEMPOTENCY_KEY ||--o| ORDER : guards
 ```
 
----
-
-## Key Features
-
-### Authentication & Authorization
-- JWT-based stateless authentication
-- BCrypt password hashing
-- `USER` and `ADMIN` roles enforced at endpoint level
-- Protected routes reject requests with missing or invalid tokens
-
-### Order Management
-- Create multi-item orders with stock validation
-- Price snapshot at time of purchase (not affected by future price changes)
-- Order status tracking: `PENDING` → `CONFIRMED` / `FAILED`
-- Retrieve own orders (users) or any order (admins)
-
-### Inventory Management
-- Stock deduction is transactional — partial failures roll back
-- Optimistic locking via JPA `@Version` prevents overselling under concurrent load
-- Insufficient stock returns `422 Unprocessable Entity`
-
-### Idempotency
-- Every `POST /api/orders` requires an `Idempotency-Key` header
-- SHA-256 request fingerprinting detects same-key-different-payload conflicts
-- Duplicate requests return the original response without reprocessing
-- Conflict reuse returns `409 Conflict`
-
-### Payment Processing
-- Payment state machine: `PENDING` → `PROCESSING` → `SUCCESS` / `FAILED`
-- Mock payment processor simulates real-world success/failure outcomes
-- Calling the payment endpoint twice on the same order is idempotent
-
-### Exception Handling
-- `@RestControllerAdvice` global handler maps all exceptions to correct HTTP status codes
-- Validation errors return field-level error maps with `400 Bad Request`
-- Business exceptions (`InsufficientStock`, `ResourceNotFound`, `IdempotencyConflict`) return meaningful messages
+The codebase follows a layered architecture (Controller → Service → Repository) with DTOs at the API boundary and constructor-based dependency injection.
 
 ---
 
@@ -129,113 +127,104 @@ erDiagram
 | Layer | Technology |
 |-------|-----------|
 | Language | Java 21 |
-| Framework | Spring Boot 4.1.0 |
-| Web | Spring MVC |
+| Framework | Spring Boot 4.1.0, Spring MVC |
 | Persistence | Spring Data JPA, Hibernate, MySQL 8.0 |
-| Security | Spring Security, JWT (JJWT 0.12.5) |
+| Security | Spring Security, JJWT 0.12.5 |
 | Validation | Jakarta Bean Validation |
-| Testing | JUnit 5, Mockito |
 | API Docs | springdoc-openapi (Swagger UI) |
+| Testing | JUnit 5, Mockito |
 | Containerization | Docker, Docker Compose |
 | Build | Maven |
 
 ---
 
-## Project Structure
+## Quick Start
 
-```text
-src/
-├── main/
-│   ├── java/com/shreyas/order_payment_platform/
-│   │   ├── config/
-│   │   │   └── SecurityConfig.java           # Security filter chain, role rules
-│   │   ├── controller/
-│   │   │   ├── AuthController.java           # Register, login
-│   │   │   ├── OrderController.java          # Create, retrieve orders
-│   │   │   ├── PaymentController.java        # Process, retrieve payments
-│   │   │   ├── ProductController.java        # Product CRUD
-│   │   │   └── UserController.java
-│   │   ├── dto/
-│   │   │   ├── requests/                     # LoginRequest, RegisterRequest,
-│   │   │   │                                 # OrderRequest, OrderItemRequest,
-│   │   │   │                                 # ProductRequests
-│   │   │   └── responses/                    # JwtResponse, OrderResponse,
-│   │   │                                     # PaymentResponse, ProductResponse,
-│   │   │                                     # OrderItemResponse, UserResponse
-│   │   ├── entity/
-│   │   │   ├── enums/
-│   │   │   │   ├── IdempotencyStatus.java
-│   │   │   │   ├── OrderStatus.java
-│   │   │   │   ├── PaymentStatus.java
-│   │   │   │   └── Role.java
-│   │   │   ├── IdempotencyKey.java
-│   │   │   ├── Order.java
-│   │   │   ├── OrderItem.java
-│   │   │   ├── Payment.java
-│   │   │   ├── Product.java
-│   │   │   └── User.java
-│   │   ├── exception/
-│   │   │   ├── GlobalExceptionHandler.java
-│   │   │   ├── IdempotencyConflictException.java
-│   │   │   ├── InsufficientStockException.java
-│   │   │   └── ResourceNotFoundException.java
-│   │   ├── filter/
-│   │   │   └── IdempotencyFilter.java        # Header presence guard
-│   │   ├── repository/
-│   │   │   ├── IdempotencyKeyRepository.java
-│   │   │   ├── OrderRepository.java
-│   │   │   ├── PaymentRepository.java
-│   │   │   ├── ProductRepository.java
-│   │   │   └── UserRepository.java
-│   │   ├── security/
-│   │   │   ├── CustomUserDetailsService.java
-│   │   │   ├── JwtAuthentication.java        # JWT filter (OncePerRequestFilter)
-│   │   │   └── JwtTokenProvider.java         # Token generation and validation
-│   │   └── service/
-│   │       ├── AuthService.java
-│   │       ├── OrderService.java
-│   │       ├── PaymentService.java
-│   │       ├── ProductService.java
-│   │       └── UserService.java
-│   └── resources/
-│       └── application.properties
-└── test/
-    └── java/com/shreyas/order_payment_platform/
-        ├── filter/
-        │   └── IdempotencyFilterTest.java
-        ├── service/
-        │   ├── OrderConcurrencyTest.java
-        │   ├── OrderServiceTest.java
-        │   ├── PaymentServiceTest.java
-        │   └── ProductServiceTest.java
-        └── OrderPaymentPlatformApplicationTests.java
+### Option A: Docker Compose (recommended)
+
+1. Create a `.env` file in the project root:
+
+   ```env
+   DB_PASSWORD=your_password
+   APP_JWT_SECRET=your_jwt_secret_key
+   ```
+
+2. Start the stack:
+
+   ```bash
+   docker compose up --build
+   ```
+
+This builds the application image, starts MySQL 8.0 with a persistent volume, waits for the database healthcheck, then starts the API.
+
+```bash
+docker compose down        # stop containers
+docker compose down -v     # stop containers and delete the database volume
 ```
+
+### Option B: Run locally
+
+**Prerequisites:** Java 21, Maven, MySQL 8.0
+
+```bash
+# 1. Clone
+git clone https://github.com/Shreyas-Kumbhar/order-payment-platform.git
+cd order-payment-platform
+
+# 2. Create the database
+mysql -u root -p -e "CREATE DATABASE order_payment_db;"
+
+# 3. Set environment variables (macOS/Linux)
+export DB_PASSWORD=your_mysql_password
+export APP_JWT_SECRET=your_256_bit_secret
+
+# 4. Run
+./mvnw spring-boot:run
+```
+
+On Windows PowerShell, set variables with `$env:DB_PASSWORD="..."` and use `mvnw.cmd`.
+
+Swagger UI: <http://localhost:8080/swagger-ui/index.html>
 
 ---
 
-## API Endpoints
+## Configuration
 
-| Method | Endpoint | Description | Auth Required | Role |
-|--------|----------|-------------|---------------|------|
+| Variable | Description |
+|----------|-------------|
+| `DB_PASSWORD` | MySQL root password |
+| `APP_JWT_SECRET` | JWT signing key (minimum 256 bits) |
+
+Mapped in `application.properties`:
+
+```properties
+spring.datasource.password=${DB_PASSWORD}
+app.jwt.secret=${APP_JWT_SECRET}
+```
+
+> **Security:** Never commit secrets. `.env` is excluded via `.gitignore`.
+
+---
+
+## API Reference
+
+| Method | Endpoint | Description | Auth | Role |
+|--------|----------|-------------|:----:|------|
 | `POST` | `/api/auth/register` | Register a new user | No | — |
-| `POST` | `/api/auth/login` | Authenticate and receive JWT | No | — |
-| `GET` | `/api/products` | List all products | No | — |
-| `GET` | `/api/products/{id}` | Get product by ID | No | — |
+| `POST` | `/api/auth/login` | Authenticate and receive a JWT | No | — |
+| `GET` | `/api/products` | List products | No | — |
+| `GET` | `/api/products/{id}` | Get a product | No | — |
 | `POST` | `/api/products` | Create a product | Yes | ADMIN |
 | `PUT` | `/api/products/{id}` | Update a product | Yes | ADMIN |
 | `POST` | `/api/orders` | Place an order | Yes | USER |
-| `GET` | `/api/orders` | Get current user's orders | Yes | USER |
-| `GET` | `/api/orders/{id}` | Get order by ID | Yes | USER / ADMIN |
+| `GET` | `/api/orders` | List the current user's orders | Yes | USER |
+| `GET` | `/api/orders/{id}` | Get an order | Yes | USER / ADMIN |
 | `POST` | `/api/payments/{orderId}` | Process payment for an order | Yes | USER |
-| `GET` | `/api/payments/{id}` | Get payment by ID | Yes | USER |
+| `GET` | `/api/payments/{id}` | Get a payment | Yes | USER |
 
-Swagger UI is available at: `http://localhost:8080/swagger-ui/index.html`
+### Authentication
 
----
-
-## Authentication
-
-### Register
+**Register**
 
 ```http
 POST /api/auth/register
@@ -248,7 +237,7 @@ Content-Type: application/json
 }
 ```
 
-### Login
+**Login**
 
 ```http
 POST /api/auth/login
@@ -260,8 +249,6 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
-
 ```json
 {
   "token": "<JWT_TOKEN>",
@@ -270,280 +257,11 @@ Content-Type: application/json
 }
 ```
 
-### Using the Token
-
-Add the token to all authenticated requests:
+Include the token on authenticated requests. Tokens expire after 24 hours.
 
 ```http
 Authorization: Bearer <JWT_TOKEN>
 ```
-
-Tokens expire after 24 hours. A new token must be obtained via login.
-
----
-
-## Idempotency Design
-
-### Why Idempotency Matters
-
-Network failures, timeouts, and client retries can cause the same request to reach the server more than once. Without idempotency, a retry could:
-
-- Create two orders from one user action
-- Charge a customer twice for the same purchase
-
-### How It Works
-
-Every `POST /api/orders` request must include an `Idempotency-Key` header — a unique string generated by the client (e.g. a UUID).
-
-```
-POST /api/orders
-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000
-Authorization: Bearer <JWT_TOKEN>
-```
-
-The system processes the key as follows:
-
-1. **Header check** — `IdempotencyFilter` rejects requests with a missing header (`400 Bad Request`)
-2. **Request fingerprinting** — `OrderService` SHA-256 hashes the request payload (product IDs + quantities)
-3. **Key lookup** — checks the `idempotency_keys` table for an existing record with this key
-4. **Duplicate detected, same payload** — returns the original order response without reprocessing
-5. **Duplicate detected, different payload** — rejects with `409 Conflict`
-6. **New request** — processes the order normally and stores the key + hash + order ID
-
-### What Is NOT Claimed
-
-This implementation handles sequential duplicate requests. It does not use distributed locking (e.g. Redis) to protect against truly simultaneous concurrent duplicates with the same key. That is listed as a future improvement.
-
----
-
-## Concurrency & Optimistic Locking
-
-### The Problem
-
-When two users simultaneously order the last unit of a product:
-
-1. Both transactions read `stockQuantity = 1`
-2. Both pass the stock check
-3. Both deduct stock — resulting in `stockQuantity = -1` (oversold)
-
-### The Solution
-
-The `Product` entity has a `@Version` field managed by Hibernate:
-
-```java
-@Version
-private Integer version;
-```
-
-When two transactions attempt to update the same product row:
-
-- The first to commit increments the version
-- The second finds the version has changed and throws `OptimisticLockException`
-- The exception is caught by `GlobalExceptionHandler` and returned as `409 Conflict`
-
-This prevents overselling without holding a database lock for the duration of the transaction.
-
----
-
-## Payment State Machine
-
-Payment status follows a strict lifecycle:
-
-```
-PENDING → PROCESSING → SUCCESS
-                     → FAILED
-```
-
-- `PENDING` — payment record created
-- `PROCESSING` — payment processor invoked
-- `SUCCESS` — payment confirmed, order moved to `CONFIRMED`
-- `FAILED` — payment declined, order moved to `FAILED`, failure reason stored
-
-Each transition is timestamped via `@PreUpdate`. Calling `POST /api/payments/{orderId}` on an already-processed order returns the existing payment without reprocessing (idempotent).
-
----
-
-## Database Design
-
-| Table | Key Columns | Notes |
-|-------|-------------|-------|
-| `users` | `id`, `username`, `email`, `password`, `role` | BCrypt password, unique username/email |
-| `products` | `id`, `name`, `price`, `stock_quantity`, `version` | `version` for optimistic locking |
-| `orders` | `id`, `user_id`, `order_status`, `total_amount`, `created_at` | FK to users |
-| `order_items` | `id`, `order_id`, `product_id`, `quantity`, `purchase_at_price` | Price snapshot at purchase time |
-| `payments` | `id`, `order_id`, `payment_status`, `amount`, `failure_reason`, `created_at`, `updated_at` | One-to-one with order |
-| `idempotency_keys` | `id`, `idempotency_key`, `request_hash`, `response_body`, `status` | Unique key constraint |
-
-Schema is managed by Hibernate `ddl-auto=update`. For production use, Flyway or Liquibase migrations are recommended.
-
----
-
-## Error Handling
-
-All exceptions are handled centrally by `GlobalExceptionHandler` (`@RestControllerAdvice`):
-
-| Exception | HTTP Status | Description |
-|-----------|-------------|-------------|
-| `ResourceNotFoundException` | `404 Not Found` | Entity not found by ID |
-| `InsufficientStockException` | `422 Unprocessable Entity` | Not enough stock |
-| `IdempotencyConflictException` | `409 Conflict` | Same key, different payload |
-| `OptimisticLockException` | `409 Conflict` | Concurrent update conflict |
-| `MethodArgumentNotValidException` | `400 Bad Request` | Bean validation failure (field-level errors) |
-| `IllegalArgumentException` | `404 Not Found` | General not-found case |
-| `IllegalStateException` | `409 Conflict` | General conflict case |
-| `Exception` | `500 Internal Server Error` | Unhandled exceptions (logged) |
-
----
-
-## Testing
-
-15 tests, all passing.
-
-```bash
-./mvnw test
-```
-
-| Test Class | Tests | What Is Covered |
-|------------|-------|-----------------|
-| `ProductServiceTest` | 4 | Create product, get by ID (found/not found), partial update |
-| `OrderServiceTest` | 4 | Total calculation, insufficient stock, idempotent replay, conflict detection |
-| `IdempotencyFilterTest` | 2 | Missing header → 400, present header → passes through |
-| `OrderConcurrencyTest` | 1 | Two threads racing for last stock — only one succeeds |
-| `PaymentServiceTest` | 3 | Success/failure outcome, duplicate prevention, order not found |
-| `OrderPaymentPlatformApplicationTests` | 1 | Spring context loads successfully |
-
-All unit tests use Mockito — no database required. The concurrency test uses `ExecutorService` and `CountDownLatch` to maximize thread collision.
-
----
-
-## Docker Setup
-
-The full stack (application + MySQL) runs with a single command:
-
-```bash
-docker compose up --build
-```
-
-This will:
-1. Build the application JAR inside a Docker build stage
-2. Start a MySQL 8.0 container with a persistent volume
-3. Wait for MySQL to pass its healthcheck before starting the app
-4. Start the Spring Boot application connected to the MySQL container
-
-To stop and remove containers:
-
-```bash
-docker compose down
-```
-
-To stop and remove containers **including the database volume**:
-
-```bash
-docker compose down -v
-```
-
-> MySQL data is persisted in a named Docker volume (`mysql_data`). Removing the volume deletes all data.
-
----
-
-## Environment Variables
-
-The application requires two secrets at runtime. These must never be committed to version control.
-
-| Variable | Description |
-|----------|-------------|
-| `DB_PASSWORD` | MySQL root password |
-| `APP_JWT_SECRET` | Secret key for JWT signing (minimum 256-bit) |
-
-**Setting environment variables on your system:**
-
-Windows (PowerShell):
-```powershell
-$env:DB_PASSWORD="your_password"
-$env:APP_JWT_SECRET="your_jwt_secret_key"
-```
-
-macOS/Linux:
-```bash
-export DB_PASSWORD=your_password
-export APP_JWT_SECRET=your_jwt_secret_key
-```
-
-**How they are used in the application:**
-
-```properties
-spring.datasource.password=${DB_PASSWORD}
-app.jwt.secret=${APP_JWT_SECRET}
-```
-
-**Using a `.env` file (optional, for Docker only):**
-
-Create a `.env` file at the project root:
-```env
-DB_PASSWORD=your_password
-APP_JWT_SECRET=your_jwt_secret_key
-```
-
-> `.env` is listed in `.gitignore` and must never be committed to GitHub.
-
----
-
-## Running Locally
-
-### Prerequisites
-
-- Java 21
-- MySQL 8.0 (or Docker)
-- Maven
-
-### Steps
-
-**1. Clone the repository**
-
-```bash
-git clone https://github.com/Shreyas-Kumbhar/order-payment-platform.git
-cd order-payment-platform
-```
-
-**2. Create the database**
-
-```sql
-CREATE DATABASE order_payment_db;
-```
-
-**3. Set environment variables**
-
-```bash
-export DB_PASSWORD=your_mysql_password
-export APP_JWT_SECRET=your_256_bit_secret
-```
-
-**4. Build the project**
-
-```bash
-./mvnw clean package -DskipTests
-```
-
-Windows:
-```bash
-mvnw.cmd clean package -DskipTests
-```
-
-**5. Run the application**
-
-```bash
-./mvnw spring-boot:run
-```
-
-**6. Access Swagger UI**
-
-```
-http://localhost:8080/swagger-ui/index.html
-```
-
----
-
-## Example Requests
 
 ### Place an Order
 
@@ -561,7 +279,7 @@ Content-Type: application/json
 }
 ```
 
-**Response `201 Created`:**
+**`201 Created`**
 
 ```json
 {
@@ -569,20 +287,18 @@ Content-Type: application/json
   "status": "PENDING",
   "totalAmount": 149.97,
   "items": [
-    { "productId": 1, "productName": "Laptop", "quantity": 2, "purchaseAtPrice": 49.99 },
+    { "productId": 1, "productName": "Keyboard", "quantity": 2, "purchaseAtPrice": 49.99 },
     { "productId": 3, "productName": "Mouse", "quantity": 1, "purchaseAtPrice": 49.99 }
   ],
   "createdAt": "2026-10-02T19:00:00"
 }
 ```
 
-**Retry with same key and payload → `200 OK`** (same response, no new order created)
-
-**Retry with same key but different payload → `409 Conflict`**
-
-```json
-"Idempotency key already used with a different request payload."
-```
+| Scenario | Response |
+|----------|----------|
+| Same key, same payload | `200 OK` with the original response; no new order created |
+| Same key, different payload | `409 Conflict` |
+| Missing `Idempotency-Key` header | `400 Bad Request` |
 
 ### Process Payment
 
@@ -591,7 +307,7 @@ POST /api/payments/42
 Authorization: Bearer <JWT_TOKEN>
 ```
 
-**Response `200 OK`:**
+**`200 OK`**
 
 ```json
 {
@@ -607,128 +323,179 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-## Backend Engineering Concepts Demonstrated
+## Core Design
 
-| Concept | How It Is Used |
-|---------|---------------|
-| REST API design | Standard HTTP methods, status codes, and resource-based URLs |
-| Layered architecture | Controller → Service → Repository, with DTOs crossing boundaries |
-| Dependency injection | Spring `@Service`, `@Repository`, constructor injection via Lombok `@RequiredArgsConstructor` |
-| JPA / Hibernate | Entity mapping, relationships, `@PrePersist`, `@PreUpdate`, `@Version` |
-| Transaction management | `@Transactional` on service methods; partial failures roll back all DB changes |
-| Optimistic locking | `@Version` on `Product` prevents concurrent overselling |
-| Idempotency | SHA-256 request fingerprinting + `idempotency_keys` table |
-| Authentication | JWT filter validates tokens on every request via `OncePerRequestFilter` |
-| Authorization | `@EnableWebSecurity` + `HttpSecurity` rules per HTTP method and path |
-| Input validation | Jakarta Bean Validation (`@NotBlank`, `@Email`, `@Min`, `@NotNull`) |
-| Exception handling | `@RestControllerAdvice` maps domain exceptions to HTTP responses |
-| Unit testing | JUnit 5 + Mockito, no Spring context, no database required |
-| Mocking | `@Mock`, `@InjectMocks`, `when/thenReturn`, `thenAnswer`, `verify` |
-| Concurrent testing | `ExecutorService`, `CountDownLatch`, `AtomicInteger` |
-| Docker | Multi-stage Dockerfile, docker-compose with healthcheck and named volume |
-| Database persistence | MySQL with Hibernate schema management |
+### Idempotency
 
----
+Network failures and client retries can deliver the same request more than once. Without safeguards, a retry could create duplicate orders or charge a customer twice.
 
-## Design Decisions
+Processing flow for `POST /api/orders`:
 
-### Why Idempotency?
+1. **Header check:** `IdempotencyFilter` rejects requests without an `Idempotency-Key` (`400`).
+2. **Fingerprinting:** `OrderService` computes a SHA-256 hash of the payload (product IDs and quantities).
+3. **Lookup:** the `idempotency_keys` table is checked for the key.
+4. **Same key, same hash:** the original response is returned without reprocessing.
+5. **Same key, different hash:** the request is rejected with `409 Conflict`.
+6. **New key:** the order is processed and the key, hash, and order ID are stored.
 
-Order and payment APIs are invoked over unreliable networks. A timeout does not mean the request failed — it may have succeeded on the server side. Without idempotency, a client retry creates a second order and a second charge. The `Idempotency-Key` pattern solves this at the API layer without requiring the client to check for existing orders before retrying.
+### Concurrency & Optimistic Locking
 
-### Why Optimistic Locking?
+Without protection, two users ordering the last unit simultaneously can both read `stockQuantity = 1`, both pass the check, and both deduct stock, leaving `-1`.
 
-Pessimistic locking (database row locks) holds a lock for the duration of a transaction, limiting throughput. Optimistic locking assumes conflicts are rare — it reads without locking and only checks for conflicts at commit time. For an inventory system where most requests succeed, this is a better tradeoff.
+`Product` carries a Hibernate-managed version field:
 
-### Why JWT?
+```java
+@Version
+private Integer version;
+```
 
-REST APIs are stateless by design. JWT allows the server to verify identity and role from the token alone, without a session store or database lookup on every request. The token is signed with a secret key, so tampering is detectable.
+The first transaction to commit increments the version. The second detects the mismatch, fails with an optimistic lock exception, and is mapped to `409 Conflict` by `GlobalExceptionHandler`. No database lock is held for the duration of the transaction.
 
-### Why Docker Compose?
+### Payment State Machine
 
-Docker Compose makes the entire stack (application + database) reproducible with a single command. It eliminates "works on my machine" problems and makes the project easier for anyone to run locally.
+```
+PENDING → PROCESSING → SUCCESS
+                     → FAILED
+```
 
-### Why a Payment State Machine?
+| State | Meaning |
+|-------|---------|
+| `PENDING` | Payment record created |
+| `PROCESSING` | Payment processor invoked |
+| `SUCCESS` | Payment confirmed; order moves to `CONFIRMED` |
+| `FAILED` | Payment declined; order moves to `FAILED`; failure reason stored |
 
-Storing payment status as an enum with `PENDING → PROCESSING → SUCCESS/FAILED` transitions (rather than a boolean `paid` flag) makes the payment lifecycle auditable. Each state is timestamped, failure reasons are preserved, and the history is inspectable after the fact.
-
----
-
-## Future Improvements
-
-The following are planned improvements, not current features:
-
-- **Redis-based distributed idempotency** — protect against concurrent duplicate requests with the same key
-- **Kafka event-driven payment processing** — decouple payment processing from order creation
-- **Flyway/Liquibase migrations** — replace `ddl-auto=update` with versioned schema migrations
-- **Testcontainers integration tests** — test against a real MySQL instance in CI
-- **CI/CD pipeline** — automated testing and Docker image builds on push
-- **Refresh token rotation** — extend JWT sessions without full re-authentication
-- **Rate limiting** — protect endpoints from abuse
-- **Distributed tracing** — request correlation across service boundaries
-- **Cloud deployment** — Render, Railway, or AWS ECS free tier
+Transitions are timestamped via `@PreUpdate`. Calling `POST /api/payments/{orderId}` on an already-processed order returns the existing payment without reprocessing.
 
 ---
 
-## Why This Project Is Interesting
+## Database Schema
 
-Most CRUD applications do not surface the engineering challenges that appear in real backend systems. This project deliberately targets those challenges:
+| Table | Key Columns | Notes |
+|-------|-------------|-------|
+| `users` | `id`, `username`, `email`, `password`, `role` | BCrypt hashes; unique username and email |
+| `products` | `id`, `name`, `price`, `stock_quantity`, `version` | `version` supports optimistic locking |
+| `orders` | `id`, `user_id`, `order_status`, `total_amount`, `created_at` | FK to `users` |
+| `order_items` | `id`, `order_id`, `product_id`, `quantity`, `purchase_at_price` | Price snapshot at purchase |
+| `payments` | `id`, `order_id`, `payment_status`, `amount`, `failure_reason`, `created_at`, `updated_at` | One-to-one with order |
+| `idempotency_keys` | `id`, `idempotency_key`, `request_hash`, `response_body`, `status` | Unique constraint on key |
 
-- **Duplicate requests** — What happens when a mobile client retries an order after a timeout? This project handles it correctly.
-- **Concurrent inventory** — What happens when two users buy the last item simultaneously? This project prevents overselling.
-- **Transaction consistency** — What happens if stock deduction succeeds but the order save fails? This project rolls back atomically.
-- **Auditable payments** — What does the payment history look like after a failure? This project preserves it.
-- **Testable claims** — The idempotency and concurrency guarantees are not just comments in the code — they are proven by automated tests.
+The schema is managed by Hibernate (`ddl-auto=update`). Versioned migrations are recommended for production (see [Roadmap](#roadmap)).
 
-These are the kinds of problems that come up in backend engineering interviews, and this project provides concrete, demonstrable answers.
+---
+
+## Error Handling
+
+`GlobalExceptionHandler` (`@RestControllerAdvice`) maps exceptions to HTTP responses:
+
+| Exception | Status | Meaning |
+|-----------|--------|---------|
+| `MethodArgumentNotValidException` | `400 Bad Request` | Validation failure (field-level errors) |
+| `ResourceNotFoundException` | `404 Not Found` | Entity not found |
+| `IllegalArgumentException` | `404 Not Found` | General not-found case |
+| `IdempotencyConflictException` | `409 Conflict` | Same key, different payload |
+| `OptimisticLockException` | `409 Conflict` | Concurrent update conflict |
+| `IllegalStateException` | `409 Conflict` | General conflict case |
+| `InsufficientStockException` | `422 Unprocessable Entity` | Not enough stock |
+| `Exception` | `500 Internal Server Error` | Unhandled; logged |
+
+---
+
+## Testing
+
+```bash
+./mvnw test
+```
+
+15 tests, all passing. Unit tests use Mockito and require no database.
+
+| Test Class | Tests | Coverage |
+|------------|:-----:|----------|
+| `ProductServiceTest` | 4 | Create, get by ID (found / not found), partial update |
+| `OrderServiceTest` | 4 | Total calculation, insufficient stock, idempotent replay, conflict detection |
+| `PaymentServiceTest` | 3 | Success / failure outcomes, duplicate prevention, order not found |
+| `IdempotencyFilterTest` | 2 | Missing header → 400; present header passes through |
+| `OrderConcurrencyTest` | 1 | Two threads racing for the last unit; only one succeeds |
+| `OrderPaymentPlatformApplicationTests` | 1 | Spring context loads |
+
+The concurrency test uses `ExecutorService`, `CountDownLatch`, and `AtomicInteger` to maximize thread contention.
+
+---
+
+## Project Structure
+
+```text
+src/
+├── main/
+│   ├── java/com/shreyas/order_payment_platform/
+│   │   ├── config/          # SecurityConfig: filter chain and role rules
+│   │   ├── controller/      # Auth, Order, Payment, Product, User
+│   │   ├── dto/
+│   │   │   ├── requests/    # Login, Register, Order, OrderItem, Product
+│   │   │   └── responses/   # Jwt, Order, OrderItem, Payment, Product, User
+│   │   ├── entity/          # User, Product, Order, OrderItem, Payment, IdempotencyKey
+│   │   │   └── enums/       # IdempotencyStatus, OrderStatus, PaymentStatus, Role
+│   │   ├── exception/       # GlobalExceptionHandler and domain exceptions
+│   │   ├── filter/          # IdempotencyFilter: header presence guard
+│   │   ├── repository/      # Spring Data JPA repositories
+│   │   ├── security/        # JWT filter, token provider, UserDetailsService
+│   │   └── service/         # Auth, Order, Payment, Product, User
+│   └── resources/
+│       └── application.properties
+└── test/
+    └── java/com/shreyas/order_payment_platform/
+        ├── filter/          # IdempotencyFilterTest
+        ├── service/         # Order, OrderConcurrency, Payment, Product tests
+        └── OrderPaymentPlatformApplicationTests.java
+```
+
+---
+
+## Design Rationale
+
+**Idempotency keys.** A timeout does not mean a request failed; it may have succeeded server-side. The `Idempotency-Key` pattern makes retries safe without requiring clients to query for existing orders first.
+
+**Optimistic locking.** Pessimistic row locks are held for the duration of a transaction and limit throughput. For inventory where most requests succeed, detecting conflicts at commit time is the better tradeoff.
+
+**JWT.** Tokens let the server verify identity and role without a session store or per-request database lookup, and tampering is detectable through the signature.
+
+**Payment state machine.** An enum-based lifecycle, rather than a boolean `paid` flag, preserves failure reasons and timestamps, so payment history can be audited after the fact.
+
+**Docker Compose.** A single command reproduces the full stack, removing environment differences between machines.
+
+---
+
+## Known Limitations
+
+- **Concurrent duplicates.** Idempotency handling covers sequential retries. Truly simultaneous requests with the same key are not protected by distributed locking.
+- **Mock payment processor.** Payment outcomes are simulated; no real payment gateway is integrated.
+- **Schema management.** `ddl-auto=update` is used instead of versioned migrations.
+- **Unit-test scope.** Tests run against mocks; no integration tests against a real database yet.
+
+---
+
+## Roadmap
+
+- [ ] Redis-based distributed idempotency for concurrent duplicate protection
+- [ ] Flyway or Liquibase schema migrations
+- [ ] Testcontainers integration tests against MySQL
+- [ ] CI/CD pipeline (automated tests and Docker image builds)
+- [ ] Kafka event-driven payment processing
+- [ ] Refresh token rotation
+- [ ] Rate limiting
+- [ ] Distributed tracing and request correlation
+- [ ] Cloud deployment (Render, Railway, or AWS ECS)
 
 ---
 
 ## License
 
-[MIT License](LICENSE)
-
-```
-MIT License
-
-Copyright (c) 2026 Shreyas Rajesh Kumbhar
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+Distributed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
 ## Author
 
-**Shreyas Rajesh Kumbhar**
-Java Backend Developer
+**Shreyas Rajesh Kumbhar**, Java Backend Developer
 
-- GitHub: [github.com/Shreyas-Kumbhar](https://github.com/Shreyas-Kumbhar)
-- LinkedIn: [linkedin.com/in/ShreyasKumbhar09](https://linkedin.com/in/ShreyasKumbhar09)
-- Portfolio: [shreyas-kumbhar.github.io/Personal-Portfolio](https://shreyas-kumbhar.github.io/Personal-Portfolio/)
-- LeetCode: [leetcode.com/ShreyasKumbhar09](https://leetcode.com/ShreyasKumbhar09)
-- Email: kumbharshreyas07@gmail.com
-
----
-
-<div align="center">
-
-Built with ❤️ by Shreyas Kumbhar
-
-</div>
+[GitHub](https://github.com/Shreyas-Kumbhar) · [LinkedIn](https://linkedin.com/in/ShreyasKumbhar09) · [Portfolio](https://shreyas-kumbhar.github.io/Personal-Portfolio/) · [LeetCode](https://leetcode.com/ShreyasKumbhar09) · [Email](mailto:kumbharshreyas07@gmail.com)
