@@ -691,7 +691,7 @@ These are the kinds of problems that come up in backend engineering interviews, 
 ```
 MIT License
 
-Copyright (c) 2026 Shreyas Kumbhar
+Copyright (c) 2026 Shreyas Rajesh Kumbhar
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -716,9 +716,14 @@ SOFTWARE.
 
 ## Author
 
-**Shreyas Kumbhar**
+**Shreyas Rajesh Kumbhar**
+Java Backend Developer
 
-GitHub: [https://github.com/Shreyas-Kumbhar](https://github.com/Shreyas-Kumbhar)
+- GitHub: [github.com/Shreyas-Kumbhar](https://github.com/Shreyas-Kumbhar)
+- LinkedIn: [linkedin.com/in/ShreyasKumbhar09](https://linkedin.com/in/ShreyasKumbhar09)
+- Portfolio: [shreyas-kumbhar.github.io/Personal-Portfolio](https://shreyas-kumbhar.github.io/Personal-Portfolio/)
+- LeetCode: [leetcode.com/ShreyasKumbhar09](https://leetcode.com/ShreyasKumbhar09)
+- Email: kumbharshreyas07@gmail.com
 
 ---
 
