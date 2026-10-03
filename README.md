@@ -722,4 +722,8 @@ GitHub: [https://github.com/Shreyas-Kumbhar](https://github.com/Shreyas-Kumbhar)
 
 ---
 
+<div align="center">
+
 Built with ❤️ by Shreyas Kumbhar
+
+</div>
